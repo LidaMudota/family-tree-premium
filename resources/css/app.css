@@ -1,11 +1,14 @@
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+:root{--bg:#f6f3ef;--text:#1f2529;--accent:#1f5d4e;--card:#fffdfa;--border:#dfd8cf}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--text);background:var(--bg)}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}.py-32{padding:32px 0}.mt-16{margin-top:16px}
+.topbar{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}.nav-wrap{display:flex;justify-content:space-between;align-items:center;padding:16px 24px}.nav-wrap nav{display:flex;gap:16px;align-items:center}
+a{color:var(--text);text-decoration:none}.brand{font-weight:700}
+.btn-accent,button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}.btn-accent:hover,button:hover{opacity:.92}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,.05)}
+.hero{padding:72px 0}.hero h1{font-size:44px;max-width:720px}.hero p{max-width:660px;color:#4e565b}
+.form-card form,label{display:flex;flex-direction:column;gap:8px}input,select,textarea{padding:10px;border:1px solid var(--border);border-radius:10px;background:#fff;width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.inline{display:inline}.inline-form{display:flex;gap:8px;align-items:center}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.alert{padding:10px;border-radius:10px;margin-bottom:16px}.success{background:#eafaf1;color:#1f6a41}.danger{background:#fdecec;color:#8f2d2d}
+#tree-canvas-wrap{overflow:hidden;border:1px solid var(--border);border-radius:14px;background:#fff;height:70vh}.node-rect{fill:#fff;stroke:#d5cec6;rx:12}.node-text{font-size:13px;fill:#1f2529}.edge{stroke:#9ca3af;stroke-width:1.5}
+.footer{display:flex;gap:16px;padding:24px 0 48px;color:#697277}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}.hero h1{font-size:34px}#tree-canvas-wrap{height:60vh}}

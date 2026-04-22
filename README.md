@@ -1,60 +1,68 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Family Tree Premium
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Production-baseline Laravel 12 приложение для создания семейных деревьев (public + private + admin), совместимое с shared hosting (PHP + MySQL + Blade).
 
-## About Laravel
+## Реализовано
+- Публичные страницы: Home, How it works, FAQ, Privacy, Terms, Contact, Support, robots/sitemap.
+- Auth: регистрация, login/logout, верификация email, reset password.
+- Кабинет: список деревьев, CRUD дерева, архивирование.
+- Редактор дерева: SVG-визуализация, pan/zoom, fit/center, поиск с центрированием, сохранение viewport.
+- Персоны: CRUD, неполные даты, фото на private disk.
+- Связи: father/mother/brother/sister/partner/child + валидации самоссылки/дубликата/цикла.
+- Экспорт: PNG (серверная выдача файла), PDF (печать-экспорт через print layout).
+- Профиль/безопасность: смена профиля, пароля, удаление аккаунта.
+- Админка: users list, trees list, block/unblock, audit/security events.
+- Security baseline: CSRF, policy checks, IDOR protection, throttling, audit trail, blocked middleware.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Архитектура (кратко)
+- Domain модели: `Tree`, `Person`, `Relationship`, `ExportJob`, `AuditEvent`.
+- HTTP слой: FormRequest + Controllers + Middleware + Policy.
+- Service слой: `AuditService`, `PhotoService`, `RelationshipGuard`.
+- Frontend: Blade + собственный JS/SVG рендер дерева.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Локальный запуск (без переустановки)
+1. Заполнить `.env` на основе `.env.example`.
+2. `php artisan key:generate`
+3. `php artisan migrate --force`
+4. `php artisan storage:link` (только для public-диска).
+5. `php artisan serve`
+6. (frontend) локально собрать ассеты: `npm run build` и деплоить собранные файлы.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Deploy на shared hosting
+1. Загрузить проект, `public/` направить в web root.
+2. Настроить PHP 8.2+, extensions (pdo_mysql, mbstring, openssl, fileinfo, gd).
+3. Заполнить `.env` (MySQL, mail, APP_URL, APP_KEY).
+4. Выполнить миграции: `php artisan migrate --force`.
+5. Включить cron: `php artisan schedule:run` каждую минуту (опционально).
+6. В production: `APP_DEBUG=false`, `LOG_LEVEL=warning`.
 
-## Learning Laravel
+## Что заполнить в `.env`
+См. комментарии `# ВСТАВЬТЕ ВРУЧНУЮ` в `.env.example` (DB, APP_URL, MAIL, APP_KEY, debug).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## После деплоя проверить вручную
+- Регистрация и email verification.
+- Создание дерева, добавление персоны, добавление связи.
+- Загрузка/удаление фото.
+- Экспорт PNG и print->PDF.
+- Ограничение доступа к чужому дереву.
+- Блокировка пользователя в админке.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Роли и доступы
+- `user`: только свои деревья/персоны/связи/экспорты.
+- `admin`: обзор пользователей, деревьев, блокировка, аудит.
 
-## Laravel Sponsors
+## Базовые маршруты
+- Public: `/`, `/how-it-works`, `/faq`, `/privacy`, `/terms`, `/contact`, `/support`.
+- Private: `/dashboard`, `/trees`, `/profile`.
+- Admin: `/admin`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Backup/restore
+- Ежедневный дамп MySQL (mysqldump) + копия storage/app/private.
+- Проверка restore на staging минимум раз в месяц.
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# family-tree-premium
+## Release checklist
+- Миграции применены.
+- APP_DEBUG=false.
+- Проверен login/reset/verification.
+- Проверен IDOR и admin guard.
+- Проверен экспорт и загрузка фото.

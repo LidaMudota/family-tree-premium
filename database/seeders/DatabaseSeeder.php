@@ -2,18 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'role' => 'admin',
-            'password' => 'AdminPass12345',
+        $this->call([
+            TestLoginUserSeeder::class,
         ]);
     }
 }

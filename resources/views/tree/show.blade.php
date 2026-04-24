@@ -30,7 +30,7 @@ window.familyTreeData = {
     treeId: {{ $tree->id }},
     csrf: '{{ csrf_token() }}',
     viewport: @json($tree->viewport),
-    people: @json($people->map(fn($p)=>['id'=>$p->id,'name'=>$p->displayName(),'summary'=>$p->summary_note,'photo'=>$p->photo_path?route('people.photo',[$tree,$p]):null])),
+        people: @js($people->map(fn($p)=>['id'=>$p->id,'name'=>$p->displayName(),'summary'=>$p->summary_note,'photo'=>$p->photo_path ? route('people.photo', [$tree, $p]) : null])->values()),
     links: @json($relationships->map(fn($r)=>['source'=>$r->person_id,'target'=>$r->relative_id,'type'=>$r->type]))
 }
 </script>

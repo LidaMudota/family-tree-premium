@@ -66,3 +66,15 @@ Production-baseline Laravel 12 приложение для создания се
 - Проверен login/reset/verification.
 - Проверен IDOR и admin guard.
 - Проверен экспорт и загрузка фото.
+
+## Тестовый аккаунт (для локального входа)
+Создаётся только через seeder `TestLoginUserSeeder` и хранится в БД с hash пароля (`Hash::make`).
+
+- Email: `test.user@example.com`
+- Password: `TestUserPass123!`
+
+Запуск сидера:
+
+```bash
+php artisan db:seed --class=Database\\Seeders\\TestLoginUserSeeder
+```

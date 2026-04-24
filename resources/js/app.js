@@ -86,3 +86,25 @@ if (d) {
         });
     }, 8000);
 }
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const revealElements = document.querySelectorAll('[data-reveal]');
+
+if (revealElements.length) {
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+        revealElements.forEach((el) => el.classList.add('is-visible'));
+    } else {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -30px 0px' });
+
+        revealElements.forEach((el, index) => {
+            el.style.transitionDelay = `${Math.min(index * 65, 320)}ms`;
+            observer.observe(el);
+        });
+    }
+}

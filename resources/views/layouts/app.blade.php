@@ -13,33 +13,49 @@
     @vite(['resources/css/app.css','resources/js/app.js'])
 </head>
 <body class="app-bg">
-<header class="topbar">
-    <div class="container nav-wrap">
-        <a href="{{ route('home') }}" class="brand">Family Tree Premium</a>
-        <nav>
-            <a href="{{ route('how') }}">Как это работает</a>
-            <a href="{{ route('faq') }}">FAQ</a>
-            <a href="{{ route('contact') }}">Контакты</a>
-            @auth
-                <a href="{{ route('dashboard') }}">Кабинет</a>
-                @if(auth()->user()->isAdmin())<a href="{{ route('admin.index') }}">Админ</a>@endif
-                <form method="post" action="{{ route('logout') }}" class="inline">@csrf<button>Выйти</button></form>
-            @else
-                <a href="{{ route('login') }}">Вход</a>
-                <a href="{{ route('register') }}" class="btn-accent">Регистрация</a>
-            @endauth
-        </nav>
-    </div>
-</header>
-<main class="container py-32">
-    @if (session('status'))<div class="alert success">{{ session('status') }}</div>@endif
-    @if ($errors->any())<div class="alert danger">{{ $errors->first() }}</div>@endif
-    @yield('content')
-</main>
-<footer class="container footer">
-    <a href="{{ route('privacy') }}">Политика</a>
-    <a href="{{ route('terms') }}">Условия</a>
-    <a href="{{ route('support') }}">Поддержка</a>
-</footer>
+<div class="site-shell">
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="ambient ambient-c"></div>
+
+    <header class="topbar">
+        <div class="container nav-wrap">
+            <a href="{{ route('home') }}" class="brand">
+                <span class="brand-dot"></span>
+                <span>Family Tree Premium</span>
+            </a>
+            <nav>
+                @auth
+                    <a href="{{ route('dashboard') }}">Кабинет</a>
+                    @if(auth()->user()->isAdmin())<a href="{{ route('admin.index') }}">Админ</a>@endif
+                    <form method="post" action="{{ route('logout') }}" class="inline">@csrf<button>Выйти</button></form>
+                @else
+                    <a href="{{ route('login') }}">Вход</a>
+                    <a href="{{ route('register') }}" class="btn-accent">Регистрация</a>
+                @endauth
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page-content py-32">
+        @if (session('status'))<div class="alert success" data-reveal>{{ session('status') }}</div>@endif
+        @if ($errors->any())<div class="alert danger" data-reveal>{{ $errors->first() }}</div>@endif
+        @yield('content')
+    </main>
+
+    <footer class="footer-wrap">
+        <div class="container footer">
+            <div>
+                <div class="brand footer-brand"><span class="brand-dot"></span><span>Family Tree Premium</span></div>
+                <p>Цифровой архив родовых историй с безопасным хранением, экспортом и совместной работой.</p>
+            </div>
+            <div class="footer-links">
+                <a href="{{ route('privacy') }}">Политика</a>
+                <a href="{{ route('terms') }}">Условия</a>
+                <a href="{{ route('support') }}">Поддержка</a>
+            </div>
+        </div>
+    </footer>
+</div>
 </body>
 </html>

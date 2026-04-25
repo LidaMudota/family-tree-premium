@@ -24,6 +24,22 @@ class PersonController extends Controller
         }
 
         $this->auditService->log('person.created', Person::class, $person->id);
+
+        if ($request->expectsJson()) {
+            $person->refresh();
+
+            return response()->json([
+                'message' => 'Персона добавлена.',
+                'person' => [
+                    'id' => $person->id,
+                    'name' => $person->displayName(),
+                    'summary' => (string) ($person->summary_note ?? ''),
+                    'birthDate' => optional($person->birth_date)->format('Y-m-d'),
+                    'photo' => $person->photo_path ? route('people.photo', [$tree, $person]) : null,
+                ],
+            ], 201);
+        }
+
         return back()->with('status', 'Персона добавлена.');
     }
 

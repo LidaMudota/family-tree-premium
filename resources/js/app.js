@@ -1,100 +1,242 @@
 import './bootstrap';
 
-const familyTreeDataNode = document.getElementById('familyTreeData');
-const d = familyTreeDataNode
-    ? {
-        treeId: Number(familyTreeDataNode.dataset.treeId),
-        csrf: familyTreeDataNode.dataset.csrf,
-        viewport: JSON.parse(familyTreeDataNode.dataset.viewport || 'null'),
-        people: JSON.parse(familyTreeDataNode.dataset.people || '[]'),
-        links: JSON.parse(familyTreeDataNode.dataset.links || '[]'),
+const safeJsonParse = (value, fallback) => {
+    if (typeof value !== 'string' || value.trim() === '') return fallback;
+
+    try {
+        const parsed = JSON.parse(value);
+        return parsed ?? fallback;
+    } catch (error) {
+        console.error('Не удалось разобрать JSON из data-атрибута:', error);
+        return fallback;
     }
-    : null;
-if (d) {
-    const svg = document.getElementById('treeSvg');
-    const NS = 'http://www.w3.org/2000/svg';
-    const g = document.createElementNS(NS, 'g');
-    svg.appendChild(g);
+};
 
-    let viewport = d.viewport || {x: 20, y: 20, scale: 1};
-    const nodes = d.people.map((p, i) => ({...p, x: (i % 6) * 220 + 20, y: Math.floor(i / 6) * 140 + 20}));
+const normalizePeople = (value) => {
+    if (!Array.isArray(value)) return [];
 
-    const map = Object.fromEntries(nodes.map(n => [n.id, n]));
+    return value
+        .filter((person) => person && typeof person === 'object')
+        .map((person) => ({
+            id: Number.isFinite(Number(person.id)) ? Number(person.id) : null,
+            name: String(person.name ?? '').trim(),
+            summary: String(person.summary ?? '').trim(),
+            photo: typeof person.photo === 'string' ? person.photo : null,
+            birthDate: typeof person.birthDate === 'string' ? person.birthDate : null,
+        }));
+};
 
-    d.links.forEach(link => {
-        const s = map[link.source]; const t = map[link.target];
-        if (!s || !t) return;
-        const line = document.createElementNS(NS, 'line');
-        line.setAttribute('class', 'edge');
-        line.setAttribute('x1', s.x + 90); line.setAttribute('y1', s.y + 40);
-        line.setAttribute('x2', t.x + 90); line.setAttribute('y2', t.y + 40);
-        g.appendChild(line);
-    });
+const normalizeLinks = (value) => {
+    if (!Array.isArray(value)) return [];
 
-    nodes.forEach(node => {
-        const box = document.createElementNS(NS, 'g');
-        box.dataset.id = node.id;
-        const rect = document.createElementNS(NS, 'rect');
-        rect.setAttribute('x', node.x); rect.setAttribute('y', node.y); rect.setAttribute('width', 180); rect.setAttribute('height', 80); rect.setAttribute('class', 'node-rect');
-        const text = document.createElementNS(NS, 'text');
-        text.setAttribute('x', node.x + 10); text.setAttribute('y', node.y + 30); text.setAttribute('class', 'node-text'); text.textContent = node.name;
-        const note = document.createElementNS(NS, 'text');
-        note.setAttribute('x', node.x + 10); note.setAttribute('y', node.y + 52); note.setAttribute('class', 'node-text'); note.textContent = (node.summary || '').slice(0, 24);
-        box.append(rect, text, note);
-        g.appendChild(box);
-    });
+    return value
+        .filter((link) => link && typeof link === 'object')
+        .map((link) => ({
+            source: Number.isFinite(Number(link.source)) ? Number(link.source) : null,
+            target: Number.isFinite(Number(link.target)) ? Number(link.target) : null,
+            type: String(link.type ?? '').trim(),
+        }))
+        .filter((link) => link.source && link.target);
+};
 
-    const updateTransform = () => g.setAttribute('transform', `translate(${viewport.x}, ${viewport.y}) scale(${viewport.scale})`);
-    updateTransform();
+const initTreeBuilder = () => {
+    const root = document.getElementById('familyTreeData');
+    const treeRoot = document.getElementById('treeBuilder');
+    const list = document.getElementById('peopleCards');
+    const modal = document.getElementById('personModal');
+    const form = document.getElementById('personCreateForm');
 
-    let panning = false, sx=0, sy=0;
-    svg.addEventListener('mousedown', e => { panning = true; sx = e.clientX; sy = e.clientY;});
-    window.addEventListener('mouseup', () => panning = false);
-    window.addEventListener('mousemove', e => {
-        if (!panning) return;
-        viewport.x += e.clientX - sx; viewport.y += e.clientY - sy; sx = e.clientX; sy = e.clientY; updateTransform();
-    });
-    svg.addEventListener('wheel', e => { e.preventDefault(); viewport.scale = Math.max(0.2, Math.min(2.5, viewport.scale + (e.deltaY < 0 ? 0.1 : -0.1))); updateTransform(); }, {passive:false});
+    if (!root || !treeRoot || !list || !modal || !form) return;
 
-    document.getElementById('fitBtn')?.addEventListener('click', () => { viewport = {x: 30, y: 30, scale: 1}; updateTransform(); });
-    document.getElementById('centerBtn')?.addEventListener('click', () => { viewport.x = 100; viewport.y = 60; updateTransform(); });
+    const treeId = Number(root.dataset.treeId);
+    const csrf = root.dataset.csrf || '';
+    const initialPeople = normalizePeople(safeJsonParse(root.dataset.people, []));
+    const links = normalizeLinks(safeJsonParse(root.dataset.links, []));
 
-    document.getElementById('searchPerson')?.addEventListener('input', async (e) => {
-        const q = e.target.value.trim();
-        if (q.length < 2) return;
-        const r = await fetch(`/trees/${d.treeId}/search?q=${encodeURIComponent(q)}`);
-        const list = await r.json();
-        const first = list[0];
-        if (!first) return;
-        const node = map[first.id];
-        if (!node) return;
-        viewport.x = 300 - node.x; viewport.y = 220 - node.y; updateTransform();
-    });
+    if (!Number.isInteger(treeId) || treeId <= 0) {
+        console.error('Некорректный treeId для конструктора.', { treeId });
+        treeRoot.dataset.state = 'error';
+        const stateBlock = document.getElementById('treeState');
+        if (stateBlock) {
+            stateBlock.textContent = 'Не удалось загрузить дерево. Обновите страницу.';
+        }
+        return;
+    }
 
-    document.getElementById('exportPngBtn')?.addEventListener('click', async () => {
-        const xml = new XMLSerializer().serializeToString(svg);
-        const img = new Image();
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
-        await new Promise(resolve => img.onload = resolve);
-        const canvas = document.createElement('canvas');
-        canvas.width = svg.clientWidth * 2; canvas.height = svg.clientHeight * 2;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const data = canvas.toDataURL('image/png');
-        const form = new FormData(); form.append('_token', d.csrf); form.append('image', data);
-        const resp = await fetch(`/trees/${d.treeId}/export/png`, {method: 'POST', body: form});
-        const blob = await resp.blob();
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `tree-${d.treeId}.png`; a.click();
-    });
+    let people = initialPeople;
 
-    setInterval(() => {
-        fetch(`/trees/${d.treeId}/viewport`, {
-            method: 'POST',
-            headers: {'Content-Type':'application/json','X-CSRF-TOKEN':d.csrf},
-            body: JSON.stringify(viewport),
+    const alertBox = document.getElementById('personFormAlert');
+    const fieldErrors = {
+        first_name: document.getElementById('error_first_name'),
+        last_name: document.getElementById('error_last_name'),
+        birth_date: document.getElementById('error_birth_date'),
+        summary_note: document.getElementById('error_summary_note'),
+        photo: document.getElementById('error_photo'),
+    };
+
+    const toggleModal = (open) => {
+        modal.classList.toggle('is-open', open);
+        modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+        if (open) {
+            document.body.classList.add('modal-open');
+            form.querySelector('input[name="first_name"]')?.focus();
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+    };
+
+    const showAlert = (message, type = 'danger') => {
+        if (!alertBox) return;
+        alertBox.className = `alert ${type}`;
+        alertBox.textContent = message;
+        alertBox.hidden = false;
+    };
+
+    const clearAlert = () => {
+        if (!alertBox) return;
+        alertBox.hidden = true;
+        alertBox.textContent = '';
+    };
+
+    const clearFieldErrors = () => {
+        Object.values(fieldErrors).forEach((node) => {
+            if (!node) return;
+            node.textContent = '';
+            node.hidden = true;
         });
-    }, 8000);
-}
+
+        form.querySelectorAll('.input-error').forEach((input) => input.classList.remove('input-error'));
+    };
+
+    const draw = () => {
+        list.innerHTML = '';
+
+        if (!people.length) {
+            const empty = document.createElement('p');
+            empty.className = 'tree-empty-text';
+            empty.textContent = 'Пока нет персон. Нажмите на карточку с плюсом, чтобы добавить первую.';
+            list.append(empty);
+        }
+
+        people.forEach((person) => {
+            const card = document.createElement('article');
+            card.className = 'person-card';
+            card.innerHTML = `
+                <div class="person-avatar">
+                    ${person.photo ? `<img src="${person.photo}" alt="${person.name || 'Персона'}">` : '<span aria-hidden="true">���</span>'}
+                </div>
+                <h3>${person.name || 'Без имени'}</h3>
+                <p>${person.birthDate ? `Рождение: ${person.birthDate}` : 'Дата рождения не указана'}</p>
+                <p>${person.summary || 'Описание пока не добавлено.'}</p>
+            `;
+            list.append(card);
+        });
+
+        const addCard = document.createElement('button');
+        addCard.type = 'button';
+        addCard.className = 'person-card add-person-card';
+        addCard.innerHTML = '<span class="plus-icon" aria-hidden="true">＋</span><span>Добавить персону</span>';
+        addCard.addEventListener('click', () => {
+            clearAlert();
+            clearFieldErrors();
+            toggleModal(true);
+        });
+        list.append(addCard);
+
+        const stateBlock = document.getElementById('treeState');
+        if (stateBlock) {
+            stateBlock.textContent = links.length
+                ? `Персон: ${people.length}. Связей: ${links.length}.`
+                : `Персон: ${people.length}. Добавьте связи после заполнения карточек.`;
+        }
+    };
+
+    draw();
+
+    document.querySelectorAll('[data-open-person-modal]').forEach((button) => {
+        button.addEventListener('click', () => {
+            clearAlert();
+            clearFieldErrors();
+            toggleModal(true);
+        });
+    });
+
+    document.querySelectorAll('[data-close-person-modal]').forEach((button) => {
+        button.addEventListener('click', () => toggleModal(false));
+    });
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) toggleModal(false);
+    });
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        clearFieldErrors();
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton?.setAttribute('disabled', 'disabled');
+
+        const formData = new FormData(form);
+
+        formData.set('gender', 'unknown');
+        formData.set('life_status', 'unknown');
+        formData.set('birth_date_precision', formData.get('birth_date') ? 'full' : 'unknown');
+        formData.set('death_date_precision', 'unknown');
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrf,
+                    Accept: 'application/json',
+                },
+                body: formData,
+            });
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                if (response.status === 422 && payload.errors) {
+                    Object.entries(payload.errors).forEach(([field, messages]) => {
+                        const fieldError = fieldErrors[field];
+                        if (!fieldError) return;
+                        fieldError.textContent = Array.isArray(messages) ? messages[0] : String(messages);
+                        fieldError.hidden = false;
+                        form.querySelector(`[name="${field}"]`)?.classList.add('input-error');
+                    });
+
+                    showAlert('Проверьте поля формы и исправьте ошибки.', 'danger');
+                    return;
+                }
+
+                console.error('Ошибка сохранения персоны:', payload);
+                showAlert(payload.message || 'Не удалось сохранить персону. Попробуйте ещё раз.', 'danger');
+                return;
+            }
+
+            if (!payload.person) {
+                showAlert('Персона сохранена, но данные ответа неполные. Обновите страницу.', 'success');
+                window.location.reload();
+                return;
+            }
+
+            people = [...people, payload.person];
+            draw();
+            form.reset();
+            showAlert('Персона успешно добавлена.', 'success');
+            toggleModal(false);
+        } catch (error) {
+            console.error('Сетевая ошибка при добавлении персоны:', error);
+            showAlert('Сервер временно недоступен. Проверьте соединение и повторите попытку.', 'danger');
+        } finally {
+            submitButton?.removeAttribute('disabled');
+        }
+    });
+};
+
+initTreeBuilder();
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const revealElements = document.querySelectorAll('[data-reveal]');

@@ -550,3 +550,197 @@ textarea::placeholder {
     flex-direction: column;
   }
 }
+
+/* tree builder */
+.muted { color: var(--muted); }
+
+.tree-builder {
+  display: grid;
+  gap: 16px;
+}
+
+.tree-toolbar {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.tree-toolbar h1 {
+  margin: 0;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.tree-empty-text {
+  margin: 0;
+  color: var(--muted);
+}
+
+.person-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgba(9, 17, 30, .72);
+  min-height: 190px;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.person-card h3,
+.person-card p {
+  margin: 0;
+}
+
+.person-card p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.person-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .06);
+}
+
+.person-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-person-card {
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-style: dashed;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.add-person-card:hover,
+.add-person-card:focus-visible {
+  border-color: var(--accent);
+  background: rgba(79, 140, 255, .12);
+  transform: translateY(-2px);
+}
+
+.plus-icon {
+  font-size: 36px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.relationship-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.person-modal {
+  position: fixed;
+  inset: 0;
+  padding: 16px;
+  background: rgba(4, 8, 15, .62);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .2s ease, visibility .2s ease;
+  z-index: 80;
+}
+
+.person-modal.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.person-modal__dialog {
+  width: min(540px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #0b1322;
+  padding: 18px;
+  transform: translateY(10px);
+  transition: transform .2s ease;
+}
+
+.person-modal.is-open .person-modal__dialog {
+  transform: translateY(0);
+}
+
+.person-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.person-modal__header h2 { margin: 0; }
+
+.person-modal__close {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.person-modal label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.person-modal input,
+.person-modal textarea,
+.relationship-form select,
+.relationship-form input {
+  width: 100%;
+}
+
+.person-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.input-error {
+  border-color: var(--danger) !important;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .tree-toolbar {
+    flex-direction: column;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+}

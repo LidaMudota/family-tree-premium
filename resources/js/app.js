@@ -1,6 +1,15 @@
 import './bootstrap';
 
-const d = window.familyTreeData;
+const familyTreeDataNode = document.getElementById('familyTreeData');
+const d = familyTreeDataNode
+    ? {
+        treeId: Number(familyTreeDataNode.dataset.treeId),
+        csrf: familyTreeDataNode.dataset.csrf,
+        viewport: JSON.parse(familyTreeDataNode.dataset.viewport || 'null'),
+        people: JSON.parse(familyTreeDataNode.dataset.people || '[]'),
+        links: JSON.parse(familyTreeDataNode.dataset.links || '[]'),
+    }
+    : null;
 if (d) {
     const svg = document.getElementById('treeSvg');
     const NS = 'http://www.w3.org/2000/svg';

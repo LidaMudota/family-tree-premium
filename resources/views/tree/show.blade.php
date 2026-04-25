@@ -25,13 +25,13 @@
 <button>Добавить связь</button>
 </form></div>
 </div>
-<script>
-window.familyTreeData = {
-    treeId: {{ $tree->id }},
-    csrf: '{{ csrf_token() }}',
-    viewport: @json($tree->viewport),
-        people: @js($people->map(fn($p)=>['id'=>$p->id,'name'=>$p->displayName(),'summary'=>$p->summary_note,'photo'=>$p->photo_path ? route('people.photo', [$tree, $p]) : null])->values()),
-    links: @json($relationships->map(fn($r)=>['source'=>$r->person_id,'target'=>$r->relative_id,'type'=>$r->type]))
-}
-</script>
+<div
+    id="familyTreeData"
+    hidden
+    data-tree-id="{{ $tree->id }}"
+    data-csrf="{{ csrf_token() }}"
+    data-viewport='@json($tree->viewport)'
+    data-people='@js($people->map(fn($p)=>['id'=>$p->id,'name'=>$p->displayName(),'summary'=>$p->summary_note,'photo'=>$p->photo_path ? route('people.photo', [$tree, $p]) : null])->values())'
+    data-links='@json($relationships->map(fn($r)=>['source'=>$r->person_id,'target'=>$r->relative_id,'type'=>$r->type]))'
+></div>
 @endsection

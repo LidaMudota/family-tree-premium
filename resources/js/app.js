@@ -124,7 +124,7 @@ const initTreeBuilder = () => {
             card.className = 'person-card';
             card.innerHTML = `
                 <div class="person-avatar">
-                    ${person.photo ? `<img src="${person.photo}" alt="${person.name || 'Персона'}">` : '<span aria-hidden="true">���</span>'}
+                    ${person.photo ? `<img src="${person.photo}" alt="${person.name || 'Персона'}">` : '<span aria-hidden="true">+</span>'}
                 </div>
                 <h3>${person.name || 'Без имени'}</h3>
                 <p>${person.birthDate ? `Рождение: ${person.birthDate}` : 'Дата рождения не указана'}</p>
